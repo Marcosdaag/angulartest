@@ -12,6 +12,6 @@ let hpPoints: number | 'FULL' = 95;
 
 console.log({
     name2, hpPoints
-})
+});
 
 export { };
