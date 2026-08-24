@@ -6,10 +6,13 @@ import './style.css';
 // import './topics/05_basicdestructuring';
 // import './topics/06_functiondestructuring';
 // import './topics/07_import_exportr';
-import './topics/08_clases';
+// import './topics/08_clases';
+// import './topics/09_generics';
+// import './topics/10_decorators';
+import './topics/11_optional_chainning';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 
 app.innerHTML = `Hola mundo`;
 
-console.log('Hola mundo');
+// console.log('Hola mundo');
