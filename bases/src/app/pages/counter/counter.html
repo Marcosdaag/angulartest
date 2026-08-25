@@ -1,0 +1,7 @@
+<div id="contador">
+  <h1>Contador: {{ counter }}</h1>
+  <h1>Contador Signal: {{ counterSignal() }}</h1>
+  <button (click)="increaseByOne(1)">+1</button>
+  <button (click)="decreaseByOne(1)">-1</button>
+  <button (click)="reset(0)">Reset</button>
+</div>
