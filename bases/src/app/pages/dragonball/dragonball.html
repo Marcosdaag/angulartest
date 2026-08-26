@@ -1,0 +1,32 @@
+<h1>Dragonball Page</h1>
+<hr />
+
+<section class="row">
+  <div class="col-12 col-sm-6">
+    <h3>Agregar:</h3>
+    <input type="text" name="" id="" placeholder="Nombre" class="form-control mt-2" />
+    <input type="text" class="form-control mt-2" placeholder="Poder" />
+
+    <button class="mt-2 btn btn-primary">Agregar</button>
+  </div>
+
+  <div class="col-12 col-sm-6">
+    <h3>Listado</h3>
+    <ol>
+      @for (item of characters(); track item.id) {
+        @if (item.power > 500) {
+          <li>
+            {{ item.name }} -
+            <strong
+              [class.text-danger]="item.power > 9000"
+              [class.text-primary]="item.power < 9000"
+              >{{ item.power }}</strong
+            >
+          </li>
+        } @else {
+          <li>Aca no hay nada</li>
+        }
+      }
+    </ol>
+  </div>
+</section>
