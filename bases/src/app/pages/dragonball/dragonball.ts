@@ -12,18 +12,15 @@ interface Character {
   templateUrl: './dragonball.html',
 })
 export class Dragonball {
-  name  = signal('');
+  name = signal('');
   power = signal(0);
 
   characters = signal<Character[]>([
-    { id: 1, name: 'Goku',    power: 9001 },
-    { id: 2, name: 'Vegeta',  power: 8001 },
-    { id: 3, name: 'Picollo', power: 3001 },
-    { id: 4, name: 'Yamcha',  power: 500  },
+    { id: 1, name: 'Goku', power: 9001 },
   ]);
 
   powerClasses = computed(() => ({
-    'text-danger':  this.power() > 9000,
+    'text-danger': this.power() > 9000,
     'text-primary': this.power() <= 9000,
   }));
 
@@ -31,12 +28,12 @@ export class Dragonball {
     if (!this.name() || this.power() <= 0) return;
 
     const newCharacter: Character = {
-      id:    this.characters().length + 1,
-      name:  this.name(),
+      id: this.characters().length + 1,
+      name: this.name(),
       power: this.power(),
     };
 
-    this.characters.update(list => [...list, newCharacter]);
+    this.characters.update((list) => [...list, newCharacter]);
 
     // Resetear el formulario
     this.name.set('');

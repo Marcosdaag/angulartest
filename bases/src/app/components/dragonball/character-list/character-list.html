@@ -1,0 +1,15 @@
+<h3>{{ listName() }}</h3>
+<ol>
+  @for (item of characters(); track item.id) {
+    @if (item.power > 500) {
+      <li>
+        {{ item.name }} -
+        <strong [class.text-danger]="item.power > 9000" [class.text-primary]="item.power < 9000">{{
+          item.power
+        }}</strong>
+      </li>
+    } @else {
+      <li>Aca no hay nada</li>
+    }
+  }
+</ol>
