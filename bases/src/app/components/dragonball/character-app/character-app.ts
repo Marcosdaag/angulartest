@@ -1,5 +1,5 @@
 import { Component, output, signal } from '@angular/core';
-import { Character } from '../../../app/interfaces/characterinterface';
+import type { Character } from '../../../interfaces/characterinterface';
 
 @Component({
   selector: 'app-character-app',

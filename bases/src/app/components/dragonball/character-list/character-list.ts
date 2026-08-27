@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
-import type { Character } from '../../../app/interfaces/characterinterface';
+import type { Character } from '../../../interfaces/characterinterface';
 
 @Component({
   selector: 'character-list',

@@ -4,11 +4,14 @@
 <section class="row">
   <!-- Form para agregar personajes -->
   <div class="col-12 col-sm-6">
-    <app-character-app (newCharacter)="addCharacter($event)" />
+    <app-character-app (newCharacter)="dragonballService.addCharacter($event)" />
   </div>
 
   <!-- Lista de personajes -->
   <div class="col-12 col-sm-6">
-    <character-list listName="Listado de personajes" [characters]="characters()" />
+    <character-list
+      listName="Listado de personajes"
+      [characters]="dragonballService.characters()"
+    />
   </div>
 </section>
