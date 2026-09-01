@@ -1,4 +1,4 @@
-﻿# HTTP, HttpClient y RxJS en Angular
+# HTTP, HttpClient y RxJS en Angular
 
 Resumen sobre cómo funcionan las peticiones HTTP, la diferencia entre `fetch` y `HttpClient`, el concepto de headers y body, y una introducción práctica a RxJS.
 
@@ -190,7 +190,70 @@ getTrendingGifs() {
 }
 ```
 
-### Operadores más usados en Angular
+### El `pipe()` como intermediario — la idea más importante
+
+`pipe()` es el **transformador de datos intermedio** entre la petición (`http.get()`) y la respuesta final (`subscribe()`). El `subscribe()` recibe el resultado **ya procesado**, no la respuesta cruda de la API.
+
+```
+http.get()     →     pipe()     →     subscribe()
+[petición]       [intermediario]      [respuesta final]
+                       │
+                       ├── map()        transformar estructura
+                       ├── filter()     descartar lo que no sirve
+                       ├── tap()        console.log / guardar / efectos
+                       └── catchError() manejar errores
+```
+
+### La salida de uno es la entrada del siguiente
+
+Cada operador dentro del `pipe()` recibe como **input** la salida del operador anterior. El nombre del parámetro es arbitrario — lo ponés vos:
+
+```typescript
+searchGifs(query: string) {
+  return this.http.get<GiphyResponse>(url).pipe(
+
+    // 1er map: recibe el objeto completo de GiphyResponse
+    // Desestructura y devuelve SOLO el array data[]
+    map(({ data }) => data),
+    //           ↑ output: el array de gifs crudos de Giphy
+
+    // 2do map: recibe lo que devolvió el 1er map → el array data[]
+    // "items" = ese array. El nombre lo elegís vos, podría ser "gifs", "arr", "x"
+    map((items) => GifMapper.mapGiphyItemToGifArray(items))
+    //   ↑ input = salida del map anterior
+  );
+}
+```
+
+El flujo de datos paso a paso:
+
+```
+http.get() devuelve la respuesta cruda de Giphy:
+{
+  data: [ {id: '1', images: {...}}, {id: '2', ...} ],
+  meta: { status: 200 },
+  pagination: { total_count: 4815 }
+}
+       │
+       ▼ map(({ data }) => data)
+       
+[ {id: '1', images: {...}}, {id: '2', images: {...}} ]
+← Solo el array, sin meta ni pagination
+
+       │
+       ▼ map((items) => GifMapper.mapGiphyItemToGifArray(items))
+       (items = el array de arriba)
+       
+[ {id: '1', url: '...', title: '...'}, {id: '2', ...} ]
+← Solo los campos que necesita la app
+
+       │
+       ▼ subscribe() recibe esto — ya limpio y listo para el componente
+```
+
+> **Regla para leer un `pipe()`:** Leelo de arriba hacia abajo. Cada operador toma lo que devuelve el anterior y lo transforma. La salida del último operador es lo que recibe el `subscribe()`.
+
+
 
 | Operador | Para qué |
 |---|---|
