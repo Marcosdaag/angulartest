@@ -1,4 +1,4 @@
-﻿# Rutas Hijas, Layouts, Lazy Loading y Tailwind CSS
+# Rutas Hijas, Layouts, Lazy Loading y Tailwind CSS
 
 Resumen de las características vistas en el proyecto `gifs-app`: arquitectura modular por features, Tailwind CSS v4, carga perezosa (`loadComponent`), rutas hijas (`children`), layouts anidados con múltiples `<router-outlet>` y redirecciones comodín.
 
@@ -198,6 +198,102 @@ En la configuración del proyecto hay dos comodines estratégicos:
 
 ---
 
+## 7. Patrón Smart vs Dumb Components (Contenedor vs Presentacional)
+
+Es uno de los patrones más importantes en Angular. Divide los componentes en dos roles claros:
+
+| | **Smart (Contenedor)** | **Dumb (Presentacional)** |
+|---|---|---|
+| **Rol** | Maneja datos y lógica | Solo muestra lo que recibe |
+| **Obtiene datos** | De servicios, APIs, signals | Por `input()` del padre |
+| **Sabe de la app** | Sí | No — es reutilizable |
+| **Ejemplo** | `TrendingPage`, `SearchPage` | `GifList`, `GifListItem` |
+
+```
+TrendingPage (Smart)
+    │  Tiene los datos: gifs = signal<Gif[]>([])
+    │  Los baja con [gifs]="gifService.trendingGifs()"
+    ▼
+GifList (Dumb)
+    │  No sabe de dónde salieron los gifs
+    │  Solo arma la cuadrícula con @for
+    ▼
+GifListItem (Dumb)
+    Solo muestra una imagen. No sabe que existe una "lista" ni "trending"
+```
+
+> **Ventaja:** Si mañana hacés la página de `Search`, reutilizás `GifList` y `GifListItem` sin tocar ni una línea de esos componentes. Solo creás un nuevo `SearchPage` (Smart) que les pase los datos.
+
+---
+
+## 8. `input()` — Signal Inputs (nueva forma de `@Input`)
+
+Angular moderno reemplaza el decorador `@Input()` por la función `input()`, que devuelve un Signal:
+
+```typescript
+import { Component, input } from '@angular/core';
+
+// Antiguo — con decorador
+export class GifListItem {
+  @Input() imageUrl!: string; // no es un Signal, valor directo
+}
+
+// Moderno — Signal Input
+export class GifListItem {
+  imageUrl = input.required<string>(); // Signal, se lee con imageUrl()
+}
+```
+
+En el template se usa **con paréntesis** (como cualquier Signal):
+```html
+<img [src]="imageUrl()" alt="" />
+```
+
+Al usar el componente desde el padre, la sintaxis es la misma de siempre:
+```html
+<!-- El padre le pasa el valor con property binding -->
+<app-gif-list-item [imageUrl]="gif.url" />
+```
+
+### Variantes de `input()`
+
+```typescript
+// Requerido — Angular da error si el padre no lo pasa
+imageUrl = input.required<string>();
+
+// Opcional con valor por defecto
+limit = input<number>(20);
+
+// Opcional sin valor por defecto (puede ser undefined)
+title = input<string>();
+```
+
+---
+
+## 9. `ChangeDetectionStrategy.OnPush`
+
+Por defecto, Angular verifica si la UI necesita actualizarse en muchos momentos (eventos, timers, peticiones HTTP). Con `OnPush` le decís: *"solo revisá este componente cuando cambie alguno de sus `input()` o algún Signal interno"*.
+
+```typescript
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+
+@Component({
+  selector: 'app-gif-list-item',
+  templateUrl: './gif-list-item.html',
+  changeDetection: ChangeDetectionStrategy.OnPush, // ← solo re-renderiza cuando cambia imageUrl
+})
+export class GifListItem {
+  imageUrl = input.required<string>();
+}
+```
+
+**¿Cuándo usarlo?**  
+En componentes **Dumb/Presentacionales** que solo reciben datos por `input()`. Como no tienen lógica propia, solo necesitan re-renderizarse cuando el padre les manda algo nuevo. `OnPush` mejora el rendimiento evitando verificaciones innecesarias.
+
+> **Regla práctica:** Si el componente usa `input()` y no maneja eventos propios, agregale `OnPush`.
+
+---
+
 ## Resumen del Bloque
 
 | Concepto | Sintaxis / Elemento | Propósito |
@@ -209,3 +305,8 @@ En la configuración del proyecto hay dos comodines estratégicos:
 | **Redirección** | `redirectTo: 'destino'` | Desviar al usuario a una ruta predeterminada |
 | **Wildcard** | `path: '**'` | Atrapar rutas inexistentes (404 o fallback) |
 | **Tailwind v4** | `@import 'tailwindcss';` | Sistema moderno de estilos atómicos en el CSS global |
+| **Smart Component** | Inyecta servicios, maneja datos | Contenedor con lógica |
+| **Dumb Component** | Solo recibe `input()` | Presentacional y reutilizable |
+| **`input.required<T>()`** | Signal Input obligatorio | Reemplaza `@Input()`, es un Signal |
+| **`OnPush`** | `changeDetection: ChangeDetectionStrategy.OnPush` | Optimiza re-renders en componentes presentacionales |
+

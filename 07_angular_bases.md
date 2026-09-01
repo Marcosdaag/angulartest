@@ -206,6 +206,95 @@ counter = signal(10);
 this.counter.update(c => c + 1); // UI se actualiza sola ✅
 ```
 
+### `computed()` — Signals derivadas
+
+Un `computed()` crea un Signal cuyo valor **se calcula automáticamente** a partir de otros Signals. Se recalcula solo cuando alguno de los Signals que usa cambia.
+
+```typescript
+import { signal, computed } from '@angular/core';
+
+power = signal(0);
+
+// Se recalcula automáticamente cuando power() cambia
+powerClasses = computed(() => ({
+  'text-danger':  this.power() > 9000,
+  'text-primary': this.power() <= 9000,
+}));
+```
+
+En el template:
+```html
+<!-- powerClasses() devuelve el objeto con las clases activas -->
+<span [ngClass]="powerClasses()">{{ power() }}</span>
+
+<!-- O con class binding directo -->
+<span [class.text-danger]="power() > 9000">{{ power() }}</span>
+```
+
+> **Regla:** No hagas cálculos complejos dentro del template. Si un valor depende de un Signal, usá `computed()` en la clase y accedé al resultado en el template.
+
+---
+
+### `effect()` — Reaccionar a cambios con efectos secundarios
+
+`effect()` ejecuta una función automáticamente **cada vez que algún Signal que usa cambia**. Es ideal para sincronizar datos con sistemas externos (localStorage, APIs, logs).
+
+```typescript
+import { signal, effect } from '@angular/core';
+
+characters = signal<Character[]>([]);
+
+// Se ejecuta automáticamente cada vez que characters cambia
+saveToLocalStorage = effect(() => {
+  localStorage.setItem('characters', JSON.stringify(this.characters()));
+});
+```
+
+**¿Por qué `JSON.stringify`?**  
+`localStorage` solo almacena strings. `JSON.stringify()` convierte el array/objeto a string JSON. Para recuperarlo después:
+```typescript
+JSON.parse(localStorage.getItem('characters') ?? '[]')
+```
+
+| | `signal()` | `computed()` | `effect()` |
+|---|---|---|---|
+| **Para qué** | Guardar estado | Calcular valor derivado | Ejecutar código cuando algo cambia |
+| **Devuelve** | Un valor reactivo | Un valor reactivo (readonly) | Nada (solo ejecuta) |
+| **Ejemplo** | `name = signal('')` | `fullName = computed(() => ...)` | `effect(() => localStorage...)` |
+
+---
+
+### `@for` — Control flow moderno en templates
+
+Angular moderno usa la sintaxis `@for` en lugar de la directiva `*ngFor`. Es más legible y no requiere importar nada:
+
+```html
+<!-- Sintaxis moderna (Angular 17+) -->
+@for (gif of gifs(); track gif.id) {
+  <app-gif-list-item [imageUrl]="gif.url" />
+}
+
+<!-- Equivalente antiguo con *ngFor (aún funciona pero está en desuso) -->
+<app-gif-list-item *ngFor="let gif of gifs(); trackBy: trackByFn" />
+```
+
+El `track` es obligatorio — le dice a Angular cómo identificar cada elemento para actualizar solo los que cambian, no re-renderizar toda la lista:
+
+```html
+@for (item of menuOptions; track item.route) {
+  <a [routerLink]="item.route">{{ item.label }}</a>
+}
+```
+
+También existe `@if` y `@switch` para condicionales:
+```html
+@if (loading()) {
+  <p>Cargando...</p>
+} @else {
+  <app-gif-list [gifs]="gifs()" />
+}
+```
+
 ---
 
 ## 5. Bindings — Conectar TypeScript con el HTML

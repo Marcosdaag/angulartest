@@ -145,7 +145,142 @@ export class GifService {
 
 ---
 
-## 4. RxJS — Reactive Extensions for JavaScript
+## 4. Servicios en Angular — `@Injectable`
+
+Los **servicios** son clases que contienen lógica de negocio, llamadas HTTP y estado compartido. Se inyectan en los componentes que los necesitan.
+
+### Crear un servicio
+
+```typescript
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+
+@Injectable({ providedIn: 'root' })  // ← disponible en toda la app, singleton
+export class GifService {
+
+  private http = inject(HttpClient);  // ← inyección moderna sin constructor
+
+  // Estado interno del servicio — compartido entre todos los que lo inyecten
+  trendingGifs = signal<Gif[]>([]);
+  trendingGifsLoading = signal(true);
+
+  constructor() {
+    this.loadTrendingGifs(); // ← se ejecuta al crear el servicio por primera vez
+  }
+
+  loadTrendingGifs() {
+    this.http.get<GiphyResponse>(url, { params: { api_key: '...', limit: 20 } })
+      .subscribe((resp) => {
+        const gifs = GifMapper.mapGiphyItemToGifArray(resp.data);
+        this.trendingGifs.set(gifs);
+        this.trendingGifsLoading.set(false);
+      });
+  }
+}
+```
+
+### Usar el servicio en un componente
+
+```typescript
+import { inject } from '@angular/core';
+import { GifService } from '../../services/gif.service';
+
+export class TrendingPage {
+  gifService = inject(GifService);
+}
+```
+
+```html
+<!-- En el template, accedés a los signals del servicio directamente -->
+@if (gifService.trendingGifsLoading()) {
+  <p>Cargando...</p>
+} @else {
+  <app-gif-list [gifs]="gifService.trendingGifs()" />
+}
+```
+
+### ¿Por qué `providedIn: 'root'`?
+
+Hace que el servicio sea un **singleton**: Angular crea una única instancia y la comparte con todos los componentes que lo inyecten. Si `TrendingPage` y `SearchPage` inyectan `GifService`, ambos usan **la misma instancia** — el mismo estado, los mismos datos.
+
+---
+
+## 5. Patrón Mapper / DTO — Transformar datos de la API
+
+Las APIs externas suelen devolver objetos con decenas de propiedades que no todas necesitás. El patrón **Mapper** transforma esos objetos crudos en interfaces limpias propias de tu app.
+
+### El problema
+
+La API de Giphy devuelve objetos gigantes:
+```typescript
+// GiphyItem — lo que devuelve Giphy (objeto crudo, muchos campos)
+{
+  id: 'abc123',
+  title: 'My gif',
+  images: {
+    original: { url: '...', width: '480', height: '270', size: '1234567' },
+    fixed_width: { url: '...', width: '200' },
+    // ...decenas de variantes más
+  },
+  user: { ... },
+  analytics: { ... },
+  // ...muchos campos más
+}
+```
+
+### Tu interfaz limpia (DTO)
+
+```typescript
+// gif.interface.ts — solo lo que usa tu app
+export interface Gif {
+  id: string;
+  title: string;
+  url: string;
+}
+```
+
+### El Mapper — clase de transformación
+
+```typescript
+// gif.mapper.ts
+import { Gif } from '../interfaces/gif.interface';
+import { GiphyItem } from '../interfaces/giphy.interfaces';
+
+export class GifMapper {
+
+  // Transforma un item de Giphy en tu interfaz Gif
+  static mapGiphyItemToGif(item: GiphyItem): Gif {
+    return {
+      id: item.id,
+      title: item.title,
+      url: item.images.original.url
+    };
+  }
+
+  // Transforma un array completo
+  static mapGiphyItemToGifArray(items: GiphyItem[]): Gif[] {
+    return items.map(this.mapGiphyItemToGif);
+  }
+}
+```
+
+Uso en el servicio:
+```typescript
+.subscribe((resp) => {
+  const gifs = GifMapper.mapGiphyItemToGifArray(resp.data);
+  this.trendingGifs.set(gifs);
+});
+```
+
+**Ventajas del patrón Mapper:**
+- Si Giphy cambia la estructura de su API, solo tocás el Mapper, no todos los componentes.
+- Tus componentes trabajan siempre con tu interfaz limpia `Gif`, independientemente de la fuente.
+- El código de los componentes queda desacoplado de la API externa.
+
+---
+
+## 6. RxJS — Reactive Extensions for JavaScript
+
 
 RxJS es una librería para manejar **flujos de datos asíncronos**. Angular la usa como base de `HttpClient`.
 
