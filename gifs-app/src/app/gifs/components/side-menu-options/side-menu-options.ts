@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { GifService } from './../../services/gif.service';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from "@angular/router";
 
 interface MenuOptions {
@@ -15,6 +16,8 @@ interface MenuOptions {
 })
 export class SideMenuOptions {
 
+  gifService = inject(GifService);
+
   menuOptions: MenuOptions[] = [
     {
       icon: 'fa-solid fa-chart-line',
@@ -29,4 +32,5 @@ export class SideMenuOptions {
       route: '/dashboard/search'
     },
   ]
+
 }
