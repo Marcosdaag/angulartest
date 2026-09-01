@@ -15,7 +15,7 @@ export default class Search {
 
   onSearch(query: string) {
     this.gifSerive.searchGifs(query).subscribe(resp => {
-      console.log(resp);
+      this.gifs.set(resp);
     });
   }
 }

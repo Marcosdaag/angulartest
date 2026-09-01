@@ -5,7 +5,7 @@ import { environment } from "@environments/environment.development";
 import type { GiphyResponse } from "../interfaces/giphy.interfaces";
 import { Gif } from "../interfaces/gif.interface";
 import { GifMapper } from "../mapper/gif.mapper";
-import { tap } from 'rxjs';
+import { map, tap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class GifService {
@@ -42,6 +42,8 @@ export class GifService {
         q: query
       }
     }).pipe(
+      map(({ data }) => data),
+      map((items) => GifMapper.mapGiphyItemToGifArray(items))
     );
     // .subscribe((resp) => {
     //   const gifs = GifMapper.mapGiphyItemToGifArray(resp.data);
