@@ -10,11 +10,11 @@ import { Gif } from '../../interfaces/gif.interface';
 })
 export default class Search {
 
-  gifSerive = inject(GifService);
+  gifService = inject(GifService);
   gifs = signal<Gif[]>([]);
 
   onSearch(query: string) {
-    this.gifSerive.searchGifs(query).subscribe(resp => {
+    this.gifService.searchGifs(query).subscribe(resp => {
       this.gifs.set(resp);
     });
   }

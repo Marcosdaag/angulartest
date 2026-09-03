@@ -1,12 +1,18 @@
-import { GiphyItem } from './../interfaces/giphy.interfaces';
 import { HttpClient } from "@angular/common/http";
-import { computed, inject, Injectable, signal } from "@angular/core";
+import { computed, effect, inject, Injectable, signal } from "@angular/core";
 import { environment } from "@environments/environment.development";
 import type { GiphyResponse } from "../interfaces/giphy.interfaces";
 import { Gif } from "../interfaces/gif.interface";
 import { GifMapper } from "../mapper/gif.mapper";
-import { map, tap } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 
+const GIF_KEY = 'gifs';
+
+const loadFromLocalStorage = (): Record<string, Gif[]> => {
+  const gifsFromLocalStorage = localStorage.getItem(GIF_KEY) ?? '{}';
+  const gifs = JSON.parse(gifsFromLocalStorage);
+  return gifs;
+};
 
 @Injectable({ providedIn: 'root' })
 export class GifService {
@@ -16,14 +22,18 @@ export class GifService {
   trendingGifs = signal<Gif[]>([]);
   trendingGifsLoading = signal(true);
 
-  // De esta manera manejamos un arreglo de llave/valor "diccionario" para almacenar la busqueda en string y un array de gifs de resultado
-  searchHistory = signal<Record<string, Gif[]>>({});
-
+  // Manejo de diccionario para almacenar busqueda y arreglo de gifs
+  searchHistory = signal<Record<string, Gif[]>>(loadFromLocalStorage());
   searchHistoryKeys = computed(() => Object.keys(this.searchHistory()));
 
   constructor() {
     this.loadTrendingGifs();
   }
+
+  saveGifsToLocalStorage = effect(() => {
+    const historyString = JSON.stringify(this.searchHistory());
+    localStorage.setItem(GIF_KEY, historyString);
+  });
 
   loadTrendingGifs() {
     this.http.get<GiphyResponse>(`${environment.apiUrl}/gifs/trending`, {
@@ -35,12 +45,11 @@ export class GifService {
       const gifs = GifMapper.mapGiphyItemToGifArray(resp.data);
       this.trendingGifs.set(gifs);
       this.trendingGifsLoading.set(false);
-      console.log(gifs);
     });
   }
 
-  // Al usar el return devuelve los datos automaticamente en la peticion
-  searchGifs(query: string) {
+  // Al usar el return devuelve un Observable con los datos mapeados
+  searchGifs(query: string): Observable<Gif[]> {
     return this.http.get<GiphyResponse>(`${environment.apiUrl}/gifs/search`, {
       params: {
         api_key: environment.gifApiKey,
@@ -59,9 +68,9 @@ export class GifService {
         }));
       })
     );
-    // .subscribe((resp) => {
-    //   const gifs = GifMapper.mapGiphyItemToGifArray(resp.data);
-    //   console.log({ gifs });
-    // });
+  }
+
+  getHistoryGifs(query: string): Gif[] {
+    return this.searchHistory()[query] ?? [];
   }
 }
