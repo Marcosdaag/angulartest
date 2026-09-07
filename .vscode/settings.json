@@ -1,0 +1,4 @@
+{
+  "angular-schematics.angularDisableProjectPathCheck": true,
+  "css.lint.unknownAtRules": "ignore"
+}
